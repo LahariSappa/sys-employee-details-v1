@@ -1,0 +1,19 @@
+#%RAML 1.0
+title: sys-employee-details-v1
+version: v1
+mediaType: application/json
+
+uses:
+  createEmployee: libraries/create-employee.raml
+
+/employee:
+  post:
+    body:
+      application/json:
+        type: createEmployee.employee
+        example: !include examples/create-employee-request.json
+    responses:
+      201:
+        body:
+          example: !include examples/create-employee-response.json
+            

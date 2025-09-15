@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="854a1185-3df0-433e-babf-8a5ff11c6732" >
+		<db:my-sql-connection host="localhost" port="3306" user="root" password="root" database="company" />
+	</db:config>
+	<flow name="create-employee-flow" doc:id="8ca6b393-d011-4c8f-818b-1fe7f25d6096" >
+		<logger level="INFO" doc:name="Initial Logger" doc:id="324e6fe4-dca2-46ff-a6e6-692df0fea39b" message="Request recieved to create an employee"/>
+		<ee:transform doc:name="field-check" doc:id="f4c978cb-0cf3-42b8-b1da-f2f19bb0e9f0" >
+			<ee:variables >
+				<ee:set-variable variableName="emailValidation" ><![CDATA[%dw 2.0
+import java!employee::emailValidator
+output application/json
+var email = payload.email as String
+---
+{
+  email: email,
+  valid: emailValidator::isValid(email)
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<logger level="INFO" doc:name="email-validation" doc:id="1dd4fcf2-a1af-4e1e-9369-85db9da1003b" message="#[payload]"/>
+		<choice doc:name="choice-to-send-payload-to-db" doc:id="924b7f87-2384-43d4-9882-0d12dc9848ac" >
+			<when expression="#[vars.emailValidation.valid == true]">
+				<ee:transform doc:name="db-payload" doc:id="01ee091b-0b8a-456d-9f45-5220584eac86">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+import java!employee::dateMasker
+output application/json
+---
+{
+  "firstName": payload.firstName,
+  "lastName": payload.lastName,
+  "email": payload.email,
+  "phoneNumber": payload.phoneNumber,
+  "dateOfJoining": dateMasker::maskYear(payload.dateOfJoining as Date as String {format: "dd-MM-yyyy"})
+}]]></ee:set-payload>
+</ee:message>
+				</ee:transform>
+				<db:insert doc:name="Insert" doc:id="8222ca60-1a38-440d-b207-31d924df94d8" config-ref="Database_Config">
+			<db:sql><![CDATA[insert into employee (firstName,lastName,email,phoneNumber,dateOfJoining) values (:firstName,:lastName,:email,:phoneNumber,:dateOfJoining)]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	firstName: payload.firstName,
+	lastName: payload.lastName,
+	email: payload.email,
+	phoneNumber:payload.phoneNumber,
+	dateOfJoining: payload.dateOfJoining
+}]]]></db:input-parameters>
+		</db:insert>
+				<ee:transform doc:name="success-response" doc:id="21c9ee94-7f26-4ee5-9f71-2433421919ac">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Employee created successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="invalid-email-logger" doc:id="2d3f164a-4a48-4bb0-911f-0ed0dd7570f0" message="Received invalid email"/>
+				<set-variable value="400" doc:name="Set httpStatus" doc:id="004d257f-75ae-4948-959d-3e5b84410298" variableName="httpStatus"/>
+				<ee:transform doc:name="invalid-email-repsonse" doc:id="79cb7bcd-94a7-4946-a0f9-372995ccc552" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  message: "Received invalid email"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="16cc5c9a-6cd6-4ca1-b6d2-7d73711028a7" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="f1f50ad2-de3e-42a9-87a9-4857986b5eb5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"applicationName" : app.name,
+	"errorType" : error.errorType,
+	"errorDescription" : error.detailedDescription,
+	"message" : error.muleMessage
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

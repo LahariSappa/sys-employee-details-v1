@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit"
+	xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="create-employee-suite.xml" />
+	<munit:test name="create-employee-success-flow-test"
+		doc:id="e7001e42-f836-464d-9642-cfedf584ae0a">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Input"
+				doc:id="66918d01-92f2-4b81-8d18-d4d5f773349a">
+				<munit:payload
+					value="#[output application/json  --- readUrl('classpath://createemployeeflowtest\set-event_payload.dwl')]"
+					encoding="UTF-8" mediaType="application/json " />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Mock when"
+				doc:id="5a685889-9c2b-4b8a-bc43-0c90cb49114e" processor="db:insert">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="8222ca60-1a38-440d-b207-31d924df94d8"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="Flow-ref to create-employee-flow"
+				doc:id="face9e8a-db46-4298-80b1-11aa5ec909da"
+				name="create-employee-flow" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert doc:name="Assert payload"
+				doc:id="e40b498a-8ff4-4131-9a03-7aad17c65e14"
+				message="The payload does not match">
+				<munit-tools:that><![CDATA[#[%dw 2.0
+import createemployeeflowtest::assert_expression_payload
+---
+assert_expression_payload::main({payload: payload, attributes: attributes, vars: vars})]]]></munit-tools:that>
+			</munit-tools:assert>
+		</munit:validation>
+	</munit:test>
+	<munit:test name="create-employee-failure-flow-test"
+		doc:id="b585a075-8c41-4f02-9d41-204ea4dad717"
+		expectedErrorType="DB:CONNECTIVITY">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Input"
+				doc:id="d8291e07-06a2-4f23-ac8b-8cf48e5deec0">
+				<munit:payload
+					value="#[output application/json  --- readUrl('classpath://createemployeeflowtest\set-event_payload.dwl')]"
+					encoding="UTF-8" mediaType="application/json " />
+			</munit:set-event>
+			<munit-tools:mock-when doc:name="Mock when"
+				doc:id="60758db5-ce12-4a82-8b7c-80b97fcf0fe0" processor="db:insert">
+				<munit-tools:with-attributes>
+					<munit-tools:with-attribute
+						whereValue="8222ca60-1a38-440d-b207-31d924df94d8"
+						attributeName="doc:id" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return>
+					<munit-tools:error typeId="DB:CONNECTIVITY" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="Flow-ref to create-employee-flow"
+				doc:id="27c820e7-adf0-442d-9050-6763f96d172c"
+				name="create-employee-flow" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals
+				doc:name="Assert equals"
+				doc:id="8b7c277f-9fe1-4e47-a197-5803919fe9c9"
+				actual="#[payload.errorType]" expected='#["DB:CONNECTIVITY"]'
+				message="Error Type is not matching" />
+		</munit:validation>
+	</munit:test>
+<!-- [STUDIO:"create-employee-invalid-email-flow-test"]	<munit:test name="create-employee-invalid-email-flow-test"
+		doc:id="63f84279-1f5b-4545-b548-a416c84bf2b7">
+		<munit:behavior>
+			<munit:set-event doc:name="Set Input"
+				doc:id="32ce82c5-ce76-449b-84e9-ddab5c2060a5">
+				<munit:payload
+					value="#[output application/json  &#45;&#45;- readUrl('classpath://createemployeeflowtest\set-event-invalid-email-payload.dwl')&#93;"
+					encoding="UTF-8" mediaType="application/json " />
+			</munit:set-event>
+		</munit:behavior>
+		<munit:execution>
+			<flow-ref doc:name="Flow-ref to create-employee-flow"
+				doc:id="fa40a8d4-5f4c-47be-a0a6-65f1373f6871"
+				name="create-employee-flow" />
+		</munit:execution>
+		<munit:validation>
+			<munit-tools:assert-equals
+				doc:name="Assert equals"
+				doc:id="7ea40205-f9f9-48f9-846d-8371467826ed"
+				actual="#[payload.message&#93;" expected='#["Received invalid email"&#93;'
+				message="Received valid email" />
+		</munit:validation>
+	</munit:test> [STUDIO] -->
+</mule>

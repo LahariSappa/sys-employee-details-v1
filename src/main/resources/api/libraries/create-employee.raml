@@ -1,0 +1,22 @@
+#%RAML 1.0 Library
+types:
+  employee:
+    type: object
+    description: Create employee details
+    properties:
+      firstName:
+        type: string
+        example: "john"
+      lastName:
+        type: string
+        example: "snow"
+      email:
+        type: string
+        example: "john.snow@example.com"
+      phoneNumber:
+        type: string
+        maxLength : 10
+        example: "9876543210"
+      dateOfJoining:
+        type: datetime
+        example: "2025-06-19T14:40:00Z"
