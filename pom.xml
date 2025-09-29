@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>9aca4ebe-682f-40ed-948e-4ebd6701f242</groupId>
+	<groupId>a187579a-832e-4efc-96e9-ba2fa61311ad</groupId>
 	<artifactId>sys-employee-details-v1</artifactId>
 	<version>1.0.0</version>
 	<packaging>mule-application</packaging>
